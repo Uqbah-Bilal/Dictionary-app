@@ -64,7 +64,7 @@ public class App {
                 System.out.println();
 
                 int numberOfEntries = root.size();
-                boolean definitions_exist = false;
+                int numberOfDefinitions = 0;
 
                 int i = 0;
                 int j;
@@ -77,12 +77,21 @@ public class App {
 
                         JsonNode definitions = root.get(i).get("shortdef");
                         if (root.get(i).has("shortdef")) {
-
-                            definitions_exist = true;
+                            
+                            // definitions_exist = true;
                             j = 0;
+
+                            if (definitions == null || definitions.isNull() || definitions.size() == 0) {
+
+                                // definitions_exist = false;
+                                i++;
+                                continue;
+
+                            }
 
                             while (j < definitions.size()) {
 
+                                numberOfDefinitions++;
                                 System.out.println("Definition: " + definitions.get(j).asText());
                                 j++;
 
@@ -100,7 +109,7 @@ public class App {
 
                     }
 
-                    if (definitions_exist == false) {
+                    if (numberOfDefinitions == 0) {
 
                         System.out.println("No definitions were found for the word!");
 
