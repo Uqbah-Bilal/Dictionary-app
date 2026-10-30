@@ -6,49 +6,54 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-// import java.nio.file.Paths;
+import java.nio.file.Paths;
 import java.util.Scanner;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class App {
     public static void main(String[] args) {
 
-        System.out.println();
+        // System.out.println();
 
-        Scanner scanner = new Scanner(System.in);
+        // Scanner scanner = new Scanner(System.in);
 
-        System.out.print("Enter an English word to search: ");
-        String word = scanner.nextLine();
+        // System.out.print("Enter an English word to search: ");
+        // String word = scanner.nextLine();
+        String word = "Learn";
 
-        Dotenv dotenv = Dotenv.load();
-        // String collegeDictionaryAPIKey =
-        // dotenv.get("MERRIAM_WEBSTER_COLLEGIATE_DICTIONARY_API_KEY");
-        String learnerDictionaryAPIKey = dotenv.get("MERRIAM_WEBSTER_LEARNERS_DICTIONARY_API_KEY");
+        // Dotenv dotenv = Dotenv.load();
+        // // String collegeDictionaryAPIKey =
+        // // dotenv.get("MERRIAM_WEBSTER_COLLEGIATE_DICTIONARY_API_KEY");
+        // String learnerDictionaryAPIKey =
+        // dotenv.get("MERRIAM_WEBSTER_LEARNERS_DICTIONARY_API_KEY");
 
-        System.out.println();
-        // System.out.println(collegeDictionaryAPIKey);
-        // System.out.println(learnerDictionaryAPIKey);
+        // System.out.println();
+        // // System.out.println(collegeDictionaryAPIKey);
+        // // System.out.println(learnerDictionaryAPIKey);
 
-        String url = "https://www.dictionaryapi.com/api/v3/references/learners/json/" + word + "?key="
-                + learnerDictionaryAPIKey;
+        // String url = "https://www.dictionaryapi.com/api/v3/references/learners/json/"
+        // + word + "?key="
+        // + learnerDictionaryAPIKey;
 
         try {
 
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .GET()
-                    .build();
+            // HttpClient client = HttpClient.newHttpClient();
+            // HttpRequest request = HttpRequest.newBuilder()
+            // .uri(URI.create(url))
+            // .GET()
+            // .build();
 
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            // HttpResponse<String> response = client.send(request,
+            // HttpResponse.BodyHandlers.ofString());
 
             System.out.println("\n----------Status Code----------");
 
-            int responseStatusCode = response.statusCode();
+            int responseStatusCode = 200; // response.statusCode();
 
             System.out.println(responseStatusCode);
 
@@ -57,11 +62,16 @@ public class App {
                 // System.out.println("Success.");
                 // return;
                 ObjectMapper mapper = new ObjectMapper();
-                JsonNode root = mapper.readTree(response.body());
+                JsonNode root = mapper.readTree(Paths.get("learn-response.json").toFile());
                 System.out.println("Number of entries: " + root.size());
                 System.out.println("\n----------Printing Response----------");
                 System.out.println(root);
-                System.out.println();
+
+                JsonNode definitions = root.get(0).get("shortdef");
+
+                JsonNodeType typeOfNode = definitions.getNodeType();
+
+                System.out.println(typeOfNode + "\n");
 
                 int numberOfEntries = root.size();
                 int numberOfDefinitions = 0;
@@ -75,27 +85,39 @@ public class App {
 
                     while (i < numberOfEntries) {
 
-                        JsonNode definitions = root.get(i).get("shortdef");
+                        JsonNode definition = root.get(i).get("shortdef");
+
                         if (root.get(i).has("shortdef")) {
-                            
+
                             // definitions_exist = true;
                             j = 0;
 
-                            if (definitions == null || definitions.isNull() || definitions.size() == 0) {
+                            if (definition.isNull()) {
 
                                 // definitions_exist = false;
                                 i++;
                                 continue;
 
-                            }
+                            } else if (definition.getNodeType() == JsonNodeType.ARRAY) {
 
-                            while (j < definitions.size()) {
+                                if (definition.size() == 0) {
 
-                                numberOfDefinitions++;
-                                System.out.println("Definition: " + definitions.get(j).asText());
-                                j++;
+                                    i++;
+                                    continue;
 
-                            }
+                                } else {
+
+                                    while (j < definition.size()) {
+
+                                        numberOfDefinitions++;
+                                        System.out.println("Definition: " + definition.get(j).asText());
+                                        j++;
+
+                                    }
+
+                                }
+
+                            } 
 
                         } else {
 
@@ -143,10 +165,12 @@ public class App {
             System.out.println("Network Issue! Could not establish connection to the server.");
         } catch (IOException i) {
             System.out.println("Input Output issue.");
-        } catch (InterruptedException g) {
-            System.out.println("Unexpected Interruption.");
         } catch (IllegalArgumentException h) {
             System.out.println("Runtime error.");
         }
     }
 }
+
+// catch (InterruptedException g) {
+// System.out.println("Unexpected Interruption.");
+// }
