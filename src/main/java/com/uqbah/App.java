@@ -6,7 +6,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.file.Paths;
+// import java.nio.file.Paths;
 import java.util.Scanner;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -18,159 +18,200 @@ import io.github.cdimascio.dotenv.Dotenv;
 public class App {
     public static void main(String[] args) {
 
-        // System.out.println();
+        System.out.println();
 
-        // Scanner scanner = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in);
 
-        // System.out.print("Enter an English word to search: ");
-        // String word = scanner.nextLine();
-        String word = "Learn";
+        // String word = "wor";
 
-        // Dotenv dotenv = Dotenv.load();
-        // // String collegeDictionaryAPIKey =
-        // // dotenv.get("MERRIAM_WEBSTER_COLLEGIATE_DICTIONARY_API_KEY");
-        // String learnerDictionaryAPIKey =
-        // dotenv.get("MERRIAM_WEBSTER_LEARNERS_DICTIONARY_API_KEY");
+        Dotenv dotenv = Dotenv.load();
+        // String collegeDictionaryAPIKey =
+        // dotenv.get("MERRIAM_WEBSTER_COLLEGIATE_DICTIONARY_API_KEY");
+        String learnerDictionaryAPIKey = dotenv.get("MERRIAM_WEBSTER_LEARNERS_DICTIONARY_API_KEY");
 
-        // System.out.println();
-        // // System.out.println(collegeDictionaryAPIKey);
-        // // System.out.println(learnerDictionaryAPIKey);
+        // System.out.println(collegeDictionaryAPIKey);
+        // System.out.println(learnerDictionaryAPIKey);
 
-        // String url = "https://www.dictionaryapi.com/api/v3/references/learners/json/"
-        // + word + "?key="
-        // + learnerDictionaryAPIKey;
+        while (true) {
 
-        try {
+            System.out.println("----------Welcome to the learner's dictionary----------\n");
 
-            // HttpClient client = HttpClient.newHttpClient();
-            // HttpRequest request = HttpRequest.newBuilder()
-            // .uri(URI.create(url))
-            // .GET()
-            // .build();
+            System.out.print("Enter an English word to search: ");
+            String word = scanner.nextLine();
 
-            // HttpResponse<String> response = client.send(request,
-            // HttpResponse.BodyHandlers.ofString());
+            System.out.println();
 
-            System.out.println("\n----------Status Code----------");
+            String url = "https://www.dictionaryapi.com/api/v3/references/learners/json/" + word + "?key="
+                    + learnerDictionaryAPIKey;
 
-            int responseStatusCode = 200; // response.statusCode();
+            try {
 
-            System.out.println(responseStatusCode);
+                HttpClient client = HttpClient.newHttpClient();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .GET()
+                        .build();
 
-            if (responseStatusCode >= 200 && responseStatusCode < 300) {
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-                // System.out.println("Success.");
-                // return;
-                ObjectMapper mapper = new ObjectMapper();
-                JsonNode root = mapper.readTree(Paths.get("learn-response.json").toFile());
-                System.out.println("Number of entries: " + root.size());
-                System.out.println("\n----------Printing Response----------");
-                System.out.println(root);
+                System.out.println("\n----------Status Code----------");
 
-                JsonNode definitions = root.get(0).get("shortdef");
+                int responseStatusCode = response.statusCode();
 
-                JsonNodeType typeOfNode = definitions.getNodeType();
+                System.out.println(responseStatusCode);
 
-                System.out.println(typeOfNode + "\n");
+                if (responseStatusCode >= 200 && responseStatusCode < 300) {
 
-                int numberOfEntries = root.size();
-                int numberOfDefinitions = 0;
+                    // System.out.println("Success.");
+                    // return;
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode root = mapper.readTree(response.body());
+                    System.out.println("Number of entries: " + root.size());
+                    System.out.println("\n----------Printing Response----------");
 
-                int i = 0;
-                int j;
+                    // System.out.println(root.get(0).getNodeType() == JsonNodeType.STRING);
 
-                System.out.println("Word: " + word + "\n");
+                    // JsonNode definitions = root.get(0).get("shortdef");
 
-                if (numberOfEntries > 0) {
+                    // JsonNodeType typeOfNode = definitions.getNodeType();
 
-                    while (i < numberOfEntries) {
+                    // System.out.println(typeOfNode + "\n");
 
-                        JsonNode definition = root.get(i).get("shortdef");
+                    int numberOfEntries = root.size();
+                    int numberOfDefinitions = 0;
 
-                        if (root.get(i).has("shortdef")) {
+                    int i = 0;
+                    int j;
 
-                            // definitions_exist = true;
-                            j = 0;
+                    System.out.println("\nWord: " + word + "\n");
 
-                            if (definition.isNull()) {
+                    if (numberOfEntries > 0) {
 
-                                // definitions_exist = false;
-                                i++;
-                                continue;
+                        while (i < numberOfEntries) {
 
-                            } else if (definition.getNodeType() == JsonNodeType.ARRAY) {
+                            if (root.get(i).isTextual()) {
 
-                                if (definition.size() == 0) {
+                                System.out.println(
+                                        "Could not find any definitions for the provided word. Try these words instead:-\n");
+
+                                System.out.print("{");
+
+                                j = 0;
+
+                                while (j < numberOfEntries) {
+
+                                    if (j == numberOfEntries - 1) {
+
+                                        System.out.print(root.get(j).asText());
+
+                                    } else {
+
+                                        System.out.print(root.get(j).asText() + ", ");
+
+                                    }
+
+                                    j++;
+
+                                }
+
+                                System.out.print("}");
+
+                                System.out.println();
+
+                                return;
+
+                            } else if (root.get(i).isObject()) {
+
+                                if (root.get(i).has("shortdef")) {
+
+                                    JsonNode definition = root.get(i).get("shortdef");
+                                    // definitions_exist = true;
+                                    j = 0;
+
+                                    if (definition.isNull()) {
+
+                                        // definitions_exist = false;
+                                        i++;
+                                        continue;
+
+                                    } else if (definition.getNodeType() == JsonNodeType.ARRAY) {
+
+                                        if (definition.size() == 0) {
+
+                                            i++;
+                                            continue;
+
+                                        } else {
+
+                                            while (j < definition.size()) {
+
+                                                numberOfDefinitions++;
+                                                System.out.println("Definition: " + definition.get(j).asText());
+                                                j++;
+
+                                            }
+
+                                        }
+
+                                    }
+
+                                } else {
 
                                     i++;
                                     continue;
 
-                                } else {
-
-                                    while (j < definition.size()) {
-
-                                        numberOfDefinitions++;
-                                        System.out.println("Definition: " + definition.get(j).asText());
-                                        j++;
-
-                                    }
-
                                 }
 
-                            } 
+                            }
+
+                            System.out.println();
+                            i++;
+
+                        }
+
+                        if (numberOfDefinitions == 0) {
+
+                            System.out.println("No definitions were found for the word!");
 
                         } else {
 
-                            i++;
+                            System.out.println("-------------------------------\n");
+
                             continue;
 
                         }
 
-                        System.out.println();
-                        i++;
-
-                    }
-
-                    if (numberOfDefinitions == 0) {
-
-                        System.out.println("No definitions were found for the word!");
-
                     } else {
 
-                        return;
+                        System.out.println("Word not found.");
 
                     }
 
-                } else {
+                } else if (responseStatusCode >= 300 && responseStatusCode < 400) {
 
-                    System.out.println("Word not found.");
+                    System.out.println("Redirection.");
+
+                } else if (responseStatusCode >= 400 && responseStatusCode < 500) {
+
+                    System.out.println("Client-side Error.");
+
+                } else if (responseStatusCode >= 500 && responseStatusCode < 600) {
+
+                    System.out.println("Server-side Error!");
 
                 }
 
-            } else if (responseStatusCode >= 300 && responseStatusCode < 400) {
+                scanner.close();
 
-                System.out.println("Redirection.");
-
-            } else if (responseStatusCode >= 400 && responseStatusCode < 500) {
-
-                System.out.println("Client-side Error.");
-
-            } else if (responseStatusCode >= 500 && responseStatusCode < 600) {
-
-                System.out.println("Server-side Error!");
-
+            } catch (ConnectException e) {
+                System.out.println("Network Issue! Could not establish connection to the server.");
+            } catch (InterruptedException g) {
+                System.out.println("Unexpected Interruption.");
+            } catch (IOException i) {
+                System.out.println("Input Output issue.");
+            } catch (IllegalArgumentException h) {
+                System.out.println("Runtime error.");
             }
-
-        } catch (ConnectException e) {
-            System.out.println("Network Issue! Could not establish connection to the server.");
-        } catch (IOException i) {
-            System.out.println("Input Output issue.");
-        } catch (IllegalArgumentException h) {
-            System.out.println("Runtime error.");
         }
     }
 }
-
-// catch (InterruptedException g) {
-// System.out.println("Unexpected Interruption.");
-// }
